@@ -1,36 +1,101 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Speaksy Voices
 
-## Getting Started
+Premium web app that turns conversational Markdown into realistic AI phone-call audio.
 
-First, run the development server:
+**Pipeline:** Markdown upload → DeepSeek V4 Flash conversation detection → Cartesia voice synthesis → merge turns → MP3/WAV export.
+
+## Features
+
+- **Multi-conversation detection** — unlimited independent scenarios in one `.md` file
+- **DeepSeek V4 Flash** analysis with deterministic Markdown fallback
+- **Cartesia Sonic** TTS for Agent + User (cloned or library voices)
+- Natural inter-turn pauses for phone-call pacing
+- Multilingual: English, Hindi, Hinglish, Telugu, Tamil, Kannada, Marathi, mixed
+- Per-conversation progress, cancel, regenerate
+- Download MP3/WAV + ZIP all
+- Apple-inspired UI with dark / light mode
+
+## Quick start
 
 ```bash
+npm install
+cp .env.example .env.local
+# Add DEEPSEEK_API_KEY and CARTESIA_API_KEY
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Demo mode
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Without `CARTESIA_API_KEY`, generation still runs with short tonal placeholders so you can exercise the full UI. Without `DEEPSEEK_API_KEY`, a local Markdown parser splits conversations by headings and `Agent:` / `User:` lines.
 
-## Learn More
+## Markdown format
 
-To learn more about Next.js, take a look at the following resources:
+```markdown
+# Hinglish (EMI Reminder)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Agent:
+Namaste! Main Priya bol rahi hoon...
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+User:
+Haan, main Rahul bol raha hoon...
 
-## Deploy on Vercel
+# Hindi (EMI Reminder)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Agent:
+नमस्ते! मैं प्रिया बोल रही हूँ...
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+User:
+हाँ, मैं राहुल बोल रहा हूँ...
+```
+
+Output files:
+
+- `hinglish-emi-reminder.mp3`
+- `hindi-emi-reminder.mp3`
+
+A sample file is available in the UI (**Try sample**) and at `public/samples/emi-reminders.md`.
+
+## Environment
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `DEEPSEEK_API_KEY` | Recommended | Conversation detection via DeepSeek V4 Flash |
+| `DEEPSEEK_MODEL` | No | Default `deepseek-v4-flash` |
+| `CARTESIA_API_KEY` | Recommended | Real TTS; demo tones without it |
+| `CARTESIA_AGENT_VOICE_ID` | No | Cloned/library voice for Agent |
+| `CARTESIA_USER_VOICE_ID` | No | Cloned/library voice for User |
+| `CARTESIA_MODEL_ID` | No | Default `sonic-3.5` |
+
+Create cloned voices in the [Cartesia playground](https://play.cartesia.ai/voices) and paste their IDs.
+
+## Architecture
+
+```
+Upload .md
+    ↓
+POST /api/analyze  → DeepSeek (or deterministic parser)
+    ↓
+POST /api/generate → job + concurrent Cartesia TTS per turn
+    ↓
+SSE /api/generate?jobId=… → live progress
+    ↓
+PCM merge + pauses → WAV + MP3
+    ↓
+GET /api/audio/[jobId]/[file]
+POST /api/download-all → ZIP
+```
+
+## Scripts
+
+```bash
+npm run dev      # development
+npm run build    # production build
+npm run start    # serve production build
+npm run lint     # eslint
+```
+
+## License
+
+Private — all rights reserved.
