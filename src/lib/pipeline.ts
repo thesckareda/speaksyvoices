@@ -24,8 +24,7 @@ import {
   updateJob,
   getJob,
 } from "./job-store";
-
-const DATA_DIR = path.join(process.cwd(), "data", "audio");
+import { getAudioDataDir } from "./paths";
 
 async function ensureDir(dir: string) {
   await fs.mkdir(dir, { recursive: true });
@@ -179,12 +178,13 @@ export async function generateConversationAudio(
     const wav = pcmToWav(merged);
     const mp3 = await pcmToMp3(merged);
 
-    await ensureDir(path.join(DATA_DIR, jobId));
+    const dataDir = getAudioDataDir();
+    await ensureDir(path.join(dataDir, jobId));
     const base = conversation.slug;
     const wavName = `${base}.wav`;
     const mp3Name = `${base}.mp3`;
-    const wavPath = path.join(DATA_DIR, jobId, wavName);
-    const mp3Path = path.join(DATA_DIR, jobId, mp3Name);
+    const wavPath = path.join(dataDir, jobId, wavName);
+    const mp3Path = path.join(dataDir, jobId, mp3Name);
 
     await fs.writeFile(wavPath, wav);
     let finalMp3Path = mp3Path;

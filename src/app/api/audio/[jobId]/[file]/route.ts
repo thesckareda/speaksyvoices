@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import path from "path";
 import fs from "fs/promises";
+import { getAudioDataDir } from "@/lib/paths";
 
 export const runtime = "nodejs";
-
-const AUDIO_ROOT = path.join(process.cwd(), "data", "audio");
 
 export async function GET(
   _req: NextRequest,
@@ -24,7 +23,7 @@ export async function GET(
     return NextResponse.json({ error: "Invalid path" }, { status: 400 });
   }
 
-  const filePath = path.join(AUDIO_ROOT, jobId, file);
+  const filePath = path.join(getAudioDataDir(), jobId, file);
 
   try {
     const data = await fs.readFile(filePath);
